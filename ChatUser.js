@@ -40,10 +40,12 @@ class ChatUser {
   /** handle a chat: broadcast to room. */
 
   handleChat(text) {
+    const membersArray = Array.from(this.room.members);
     this.room.broadcast({
       name: this.name,
       type: 'chat',
-      text: text
+      text: text,
+      members: membersArray
     });
   }
 

@@ -4,7 +4,6 @@ const urlParts = document.URL.split("/");
 const roomName = urlParts[urlParts.length - 1];
 const ws = new WebSocket(`ws://localhost:3000/chat/${roomName}`);
 
-
 const name = prompt("Username?");
 
 /** called when connection opens, sends join info to server. */
@@ -30,27 +29,50 @@ ws.onmessage = async function(evt) {
   }
 
   // handle if user wants a joke
-  else if (msg.type === "chat" && msg.text === '/joke') {
-    // if this is the user who wants a joke, give user a joke
-    if (msg.name === name) {
-      // get a joke
-      try {
-        const headers = { 'Accept': 'application/json' }
-        const response = await
-          axios.get("https://icanhazdadjoke.com/", { headers });
-        console.log(response);
-        item = $(`<li><i>${response.data.joke}<i><li>`);
-      }
-      catch(err) {
-        item = $(`<li><i>Could not get joke<i><li>`);
-        console.error(err.message);
-      }
-    }
-    // otherwise, do nothing
-  }
-
   else if (msg.type === "chat") {
-    item = $(`<li><b>${msg.name}: </b>${msg.text}</li>`);
+    switch(msg.text) {
+      case '/joke':
+        // if this is the user who wants a joke, give user a joke
+        if (msg.name === name) {
+          // get a joke
+          try {
+            const headers = { 'Accept': 'application/json' }
+            const response = await
+              axios.get("https://icanhazdadjoke.com/", { headers }); /* Learned how to set Axios headers at https://masteringjs.io/tutorials/axios/headers */
+            console.log(response);
+            item = $(`<li><i>${response.data.joke}</i></li>`);
+          }
+          catch(err) {
+            item = $(`<li><i>Could not get joke</i></li>`);
+            console.error(err.message);
+          }
+        }
+        // otherwise, do nothing
+        break;
+      case '/members':
+        // if this is the user who wants list of members, show list
+        if (msg.name === name) {
+          // get members from this room
+          let membersList = "";
+          let firstMember = true;
+          for (let member of msg.members) {
+            // add comma before each member except first
+            if (firstMember) {
+              firstMember = false;
+            }
+            else {
+              membersList += ", ";
+            }
+            membersList += member.name;
+          }
+          item = $(`<li><i>In room: ${membersList}</i></li>`);
+        }
+        // otherwise, do nothing
+        break;
+      default:
+        item = $(`<li><b>${msg.name}: </b>${msg.text}</li>`);
+        break;
+    }
   }
 
   else {

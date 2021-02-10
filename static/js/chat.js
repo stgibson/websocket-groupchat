@@ -6,10 +6,6 @@ const ws = new WebSocket(`ws://localhost:3000/chat/${roomName}`);
 
 
 const name = prompt("Username?");
-const joke = `
-  Q. Why did the chicken cross the road?
-  A. To get to the other side.
-`;
 
 /** called when connection opens, sends join info to server. */
 
@@ -23,7 +19,7 @@ ws.onopen = function(evt) {
 
 /** called when msg received from server; displays it. */
 
-ws.onmessage = function(evt) {
+ws.onmessage = async function(evt) {
   console.log("message", evt);
 
   let msg = JSON.parse(evt.data);
@@ -37,7 +33,18 @@ ws.onmessage = function(evt) {
   else if (msg.type === "chat" && msg.text === '/joke') {
     // if this is the user who wants a joke, give user a joke
     if (msg.name === name) {
-      item = $(`<li><i>${joke}<i><li>`);
+      // get a joke
+      try {
+        const headers = { 'Accept': 'application/json' }
+        const response = await
+          axios.get("https://icanhazdadjoke.com/", { headers });
+        console.log(response);
+        item = $(`<li><i>${response.data.joke}<i><li>`);
+      }
+      catch(err) {
+        item = $(`<li><i>Could not get joke<i><li>`);
+        console.error(err.message);
+      }
     }
     // otherwise, do nothing
   }

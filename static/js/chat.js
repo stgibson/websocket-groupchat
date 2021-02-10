@@ -4,7 +4,7 @@ const urlParts = document.URL.split("/");
 const roomName = urlParts[urlParts.length - 1];
 const ws = new WebSocket(`ws://localhost:3000/chat/${roomName}`);
 
-const name = prompt("Username?");
+let name = prompt("Username?");
 
 /** called when connection opens, sends join info to server. */
 
@@ -30,7 +30,8 @@ ws.onmessage = async function(evt) {
 
   // handle if user wants a joke
   else if (msg.type === "chat") {
-    switch(msg.text) {
+    const words = msg.text.split(" ");
+    switch(words[0]) {
       case '/joke':
         // if this is the user who wants a joke, give user a joke
         if (msg.name === name) {
@@ -68,6 +69,31 @@ ws.onmessage = async function(evt) {
           item = $(`<li><i>In room: ${membersList}</i></li>`);
         }
         // otherwise, do nothing
+        break;
+      case '/priv':
+        const user = words[1];
+        // if this is the user intended to receive the message, show message
+        if (user === name) {
+          const messageWords = [];
+          for (let i = 2; i < words.length; i++) {
+            messageWords.push(words[i]);
+          }
+          item = $(`<li><b>${msg.name}: </b>${messageWords.join(" ")}</li>`);
+        }
+        // otherwise, do nothing
+        break;
+      case '/name':
+        const newName = words[1];
+        // verify user entered new name
+        if (newName) {
+          // change name of user
+          if (msg.name === name) {
+            let data = {type: "change", oldName: name, newName};
+            ws.send(JSON.stringify(data));
+            // also update name in this file
+            name = newName;
+          }
+        }
         break;
       default:
         item = $(`<li><b>${msg.name}: </b>${msg.text}</li>`);

@@ -37,6 +37,16 @@ class ChatUser {
     });
   }
 
+  /** handle changing name: add to room members, announce join */
+
+  handleChange(oldName, newName) {
+    this.name = newName;
+    this.room.broadcast({
+      type: 'note',
+      text: `${oldName} changed to "${newName}".`
+    });
+  }
+
   /** handle a chat: broadcast to room. */
 
   handleChat(text) {
@@ -60,6 +70,9 @@ class ChatUser {
 
     if (msg.type === 'join') this.handleJoin(msg.name);
     else if (msg.type === 'chat') this.handleChat(msg.text);
+    else if (msg.type === 'change') {
+      this.handleChange(msg.oldName, msg.newName);
+    }
     else throw new Error(`bad message: ${msg.type}`);
   }
 
